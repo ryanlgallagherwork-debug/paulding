@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Georgia Live Weather Map</title>
+    <title>Georgia & Alabama Live Weather Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
     <style>
@@ -52,7 +52,7 @@
 
         .header-right { display: flex; align-items: center; gap: 16px; }
 
-        #status { font-size: 0.7rem; color: var(--muted); }
+        #status { font-size: 0.7rem; }
         #status.loading { color: var(--accent); }
         #status.error   { color: var(--danger); }
         #status.ok      { color: var(--green); }
@@ -93,7 +93,6 @@
         }
 
         .legend-item { display: flex; align-items: center; gap: 6px; }
-
         .legend-dot {
             width: 12px; height: 12px;
             border-radius: 50%;
@@ -104,7 +103,6 @@
 
         .station-label { background: transparent; border: none; }
 
-        /* ── POPUP ── */
         .leaflet-popup-content-wrapper {
             background: var(--surface) !important;
             border: 1px solid var(--border) !important;
@@ -149,16 +147,8 @@
             margin-bottom: 2px;
         }
 
-        .popup-stat-value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .popup-stat-value.big {
-            font-size: 1.4rem;
-            color: var(--accent);
-        }
+        .popup-stat-value { font-size: 1rem; font-weight: 600; color: var(--text); }
+        .popup-stat-value.big { font-size: 1.4rem; color: var(--accent); }
 
         .popup-updated {
             font-size: 0.6rem;
@@ -168,14 +158,13 @@
             padding-top: 8px;
         }
 
-        /* Light map tiles — no dark filter */
         .leaflet-tile { filter: saturate(0.5) brightness(1.05); }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <h1>GEORGIA <span>LIVE WEATHER</span></h1>
+    <h1>GEORGIA & ALABAMA <span>LIVE WEATHER</span></h1>
     <div class="header-right">
         <div id="station-count">-- stations</div>
         <div id="status" class="loading">
@@ -193,7 +182,7 @@
     <div class="legend-item"><div class="legend-dot" style="background:#e05c2a;"></div>80–90°F</div>
     <div class="legend-item"><div class="legend-dot" style="background:#f85149;"></div>&gt;90°F</div>
     <span style="margin-left:12px;color:var(--text);font-weight:600;margin-right:4px;">BARB:</span>
-    <span>Each full barb = 10 kt · half barb = 5 kt · pennant = 50 kt</span>
+    <span>Full = 10 kt · Half = 5 kt · Pennant = 50 kt</span>
 </div>
 
 <div id="map"></div>
@@ -203,9 +192,10 @@
 const CONFIG = {
     userAgent: '(Ryan Gallagher Weather, ryanlgallagher.work@gmail.com)',
     refreshMs: 60000,
+    states: ['GA', 'AL'],
     highlightedStations: ['KPUJ', 'KFFC', 'KATL', 'KRYY'],
-    center: [33.9, -84.8],
-    zoom: 10
+    center: [32.8, -85.5],
+    zoom: 7
 };
 
 const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
@@ -238,10 +228,7 @@ function setStatus(msg, cls, color) {
    WIND BARB SVG
 ═══════════════════════════════════════════ */
 function buildWindBarbSVG(speedMs, directionDeg, color) {
-    const SIZE     = 44;
-    const cx       = SIZE / 2;
-    const cy       = SIZE / 2;
-    const staffLen = 18;
+    const SIZE = 44, cx = SIZE / 2, cy = SIZE / 2, staffLen = 18;
 
     if (speedMs === null || speedMs < 0.5) {
         return `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
@@ -249,35 +236,25 @@ function buildWindBarbSVG(speedMs, directionDeg, color) {
         </svg>`;
     }
 
-    const kts          = speedMs * 1.94384;
-    const tipY         = -staffLen;
-    const barbSpacing  = 4;
-    const fullBarbLen  = 9;
-    const halfBarbLen  = 5;
-    const pennantWidth = 5;
-
-    let barbs     = [];
-    let remaining = kts;
-    let pos       = 0;
+    const kts = speedMs * 1.94384;
+    const tipY = -staffLen;
+    let barbs = [], remaining = kts, pos = 0;
+    const barbSpacing = 4, fullBarbLen = 9, halfBarbLen = 5, pennantWidth = 5;
 
     while (remaining >= 47.5) {
-        barbs.push(`<polygon points="0,${tipY + pos} ${fullBarbLen},${tipY + pos + 2} 0,${tipY + pos + pennantWidth}" fill="${color}" stroke="${color}" stroke-width="0.5"/>`);
-        pos += pennantWidth + 1;
-        remaining -= 50;
+        barbs.push(`<polygon points="0,${tipY+pos} ${fullBarbLen},${tipY+pos+2} 0,${tipY+pos+pennantWidth}" fill="${color}" stroke="${color}" stroke-width="0.5"/>`);
+        pos += pennantWidth + 1; remaining -= 50;
     }
     while (remaining >= 7.5) {
-        barbs.push(`<line x1="0" y1="${tipY + pos}" x2="${fullBarbLen}" y2="${tipY + pos + 3}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
-        pos += barbSpacing;
-        remaining -= 10;
+        barbs.push(`<line x1="0" y1="${tipY+pos}" x2="${fullBarbLen}" y2="${tipY+pos+3}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
+        pos += barbSpacing; remaining -= 10;
     }
     if (remaining >= 2.5) {
-        barbs.push(`<line x1="0" y1="${tipY + pos}" x2="${halfBarbLen}" y2="${tipY + pos + 1.5}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
+        barbs.push(`<line x1="0" y1="${tipY+pos}" x2="${halfBarbLen}" y2="${tipY+pos+1.5}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
     }
 
-    const rotate = directionDeg ?? 0;
-
     return `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(${cx},${cy}) rotate(${rotate})">
+        <g transform="translate(${cx},${cy}) rotate(${directionDeg ?? 0})">
             <line x1="0" y1="0" x2="0" y2="${tipY}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
             ${barbs.join('\n')}
             <circle cx="0" cy="0" r="2.5" fill="${color}"/>
@@ -286,13 +263,12 @@ function buildWindBarbSVG(speedMs, directionDeg, color) {
 }
 
 /* ═══════════════════════════════════════════
-   MARKER HTML
+   MARKER — temp label only, no station ID
 ═══════════════════════════════════════════ */
-function buildMarkerHTML(stationId, tempF, speedMs, dirDeg, highlighted) {
+function buildMarkerHTML(tempF, speedMs, dirDeg, highlighted) {
     const color   = tempColor(tempF);
-    const tempStr = tempF !== null ? `${tempF}°F` : '--';
+    const tempStr = `${tempF}°F`;
     const barbSvg = buildWindBarbSVG(speedMs, dirDeg, color);
-    const shortId = stationId.startsWith('K') ? stationId.slice(1) : stationId;
     const glowStyle = highlighted ? `filter: drop-shadow(0 0 5px ${color});` : '';
 
     return `
@@ -311,12 +287,12 @@ function buildMarkerHTML(stationId, tempF, speedMs, dirDeg, highlighted) {
                 letter-spacing:0.03em;
                 text-shadow: 0 1px 3px rgba(0,0,0,0.8);
                 ${highlighted ? `border:1px solid ${color};` : ''}
-            ">${shortId} ${tempStr}</div>
+            ">${tempStr}</div>
         </div>`;
 }
 
 /* ═══════════════════════════════════════════
-   POPUP HTML
+   POPUP — station ID shown here
 ═══════════════════════════════════════════ */
 function buildPopup(stationId, name, obs) {
     const tempF   = cToF(safe(obs?.temperature?.value));
@@ -368,7 +344,7 @@ function buildPopup(stationId, name, obs) {
 }
 
 /* ═══════════════════════════════════════════
-   MAP INIT — light tile layer
+   MAP INIT
 ═══════════════════════════════════════════ */
 const map = L.map('map', { center: CONFIG.center, zoom: CONFIG.zoom });
 
@@ -383,11 +359,12 @@ const markerLayer = L.layerGroup().addTo(map);
 /* ═══════════════════════════════════════════
    FETCH
 ═══════════════════════════════════════════ */
-async function fetchStations() {
-    const res = await fetch('https://api.weather.gov/stations?state=GA&limit=500', {
-        headers: { 'User-Agent': CONFIG.userAgent }
-    });
-    if (!res.ok) throw new Error('Failed to fetch stations');
+async function fetchStations(state) {
+    const res = await fetch(
+        `https://api.weather.gov/stations?state=${state}&limit=500`,
+        { headers: { 'User-Agent': CONFIG.userAgent } }
+    );
+    if (!res.ok) throw new Error(`Failed to fetch stations for ${state}`);
     return (await res.json()).features || [];
 }
 
@@ -410,29 +387,39 @@ async function loadMap() {
     markerLayer.clearLayers();
 
     try {
-        const stations = await fetchStations();
-        const BATCH = 10;
-        let loaded = 0;
-        let shown  = 0;
+        // Fetch both states in parallel, deduplicate by stationIdentifier
+        const [gaStations, alStations] = await Promise.all(
+            CONFIG.states.map(fetchStations)
+        );
 
-        for (let i = 0; i < stations.length; i += BATCH) {
-            const batch = stations.slice(i, i + BATCH);
+        const seen = new Set();
+        const allStations = [...gaStations, ...alStations].filter(s => {
+            const id = s.properties?.stationIdentifier;
+            if (!id || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+        });
+
+        const BATCH = 10;
+        let loaded = 0, shown = 0;
+
+        for (let i = 0; i < allStations.length; i += BATCH) {
+            const batch = allStations.slice(i, i + BATCH);
 
             await Promise.all(batch.map(async (station) => {
                 const props = station.properties;
                 const geo   = station.geometry;
                 if (!geo?.coordinates) return;
 
-                const [lng, lat] = geo.coordinates;
-                const stationId  = props.stationIdentifier;
-                const name       = props.name || '';
+                const [lng, lat]  = geo.coordinates;
+                const stationId   = props.stationIdentifier;
+                const name        = props.name || '';
                 const highlighted = CONFIG.highlightedStations.includes(stationId);
 
-                const obs     = await fetchObs(stationId);
-                const tempRaw = safe(obs?.temperature?.value);
-                const tempF   = cToF(tempRaw);
+                const obs    = await fetchObs(stationId);
+                const tempF  = cToF(safe(obs?.temperature?.value));
 
-                // ── SKIP stations not reporting temperature ──
+                // Skip stations not reporting temperature
                 if (tempF === null) return;
 
                 const windMs  = safe(obs?.windSpeed?.value);
@@ -440,7 +427,7 @@ async function loadMap() {
 
                 const icon = L.divIcon({
                     className: 'station-label',
-                    html: buildMarkerHTML(stationId, tempF, windMs, windDeg, highlighted),
+                    html: buildMarkerHTML(tempF, windMs, windDeg, highlighted),
                     iconAnchor: [22, 22],
                     iconSize: [44, 60]
                 });
@@ -456,7 +443,7 @@ async function loadMap() {
             }));
 
             loaded += batch.length;
-            setStatus(`LOADING... ${loaded}/${stations.length}`, 'loading', '#f0a500');
+            setStatus(`LOADING... ${loaded}/${allStations.length}`, 'loading', '#f0a500');
         }
 
         document.getElementById('station-count').textContent = `${shown} reporting`;
