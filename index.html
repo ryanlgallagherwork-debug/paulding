@@ -199,7 +199,7 @@ const CONFIG = {
 };
 
 const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
-const msToMph = ms => ms !== null ? Math.round(ms * 2.237) : null;
+const msToMph = ms => ms !== null ? Math.round(ms * 0.62) : null;
 const safe    = (v, fb = null) => (v === null || v === undefined) ? fb : v;
 
 function degreesToCompass(deg) {
