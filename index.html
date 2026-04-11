@@ -12,10 +12,8 @@
             --surface: #161b22;
             --border: #30363d;
             --accent: #f0a500;
-            --accent2: #e05c2a;
             --text: #e6edf3;
             --muted: #8b949e;
-            --highlight: #58a6ff;
             --danger: #f85149;
             --green: #3fb950;
         }
@@ -32,7 +30,6 @@
             overflow: hidden;
         }
 
-        /* ── HEADER ── */
         #header {
             display: flex;
             align-items: center;
@@ -53,27 +50,17 @@
 
         #header h1 span { color: var(--text); }
 
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+        .header-right { display: flex; align-items: center; gap: 16px; }
 
-        #status {
-            font-size: 0.7rem;
-            color: var(--muted);
-        }
-
+        #status { font-size: 0.7rem; color: var(--muted); }
         #status.loading { color: var(--accent); }
         #status.error   { color: var(--danger); }
         #status.ok      { color: var(--green); }
 
         .pulse {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             border-radius: 50%;
-            background: var(--green);
             margin-right: 6px;
             animation: pulse 2s infinite;
         }
@@ -92,7 +79,6 @@
             border: 1px solid var(--border);
         }
 
-        /* ── LEGEND ── */
         #legend {
             display: flex;
             gap: 16px;
@@ -114,59 +100,9 @@
             border: 2px solid rgba(255,255,255,0.3);
         }
 
-        /* ── MAP ── */
-        #map {
-            flex: 1;
-            width: 100%;
-        }
+        #map { flex: 1; width: 100%; }
 
-        /* ── CUSTOM MARKER LABELS ── */
-        .station-label {
-            background: transparent;
-            border: none;
-        }
-
-        .station-marker {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .station-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.5);
-            transition: transform 0.15s;
-        }
-
-        .station-marker:hover .station-dot { transform: scale(1.4); }
-
-        .station-temp-label {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 10px;
-            font-weight: 600;
-            color: #fff;
-            background: rgba(13,17,23,0.85);
-            padding: 1px 4px;
-            border-radius: 3px;
-            margin-top: 2px;
-            white-space: nowrap;
-            pointer-events: none;
-        }
-
-        .highlighted .station-dot {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-        }
-
-        .highlighted .station-temp-label {
-            color: var(--accent);
-            background: rgba(13,17,23,0.95);
-        }
+        .station-label { background: transparent; border: none; }
 
         /* ── POPUP ── */
         .leaflet-popup-content-wrapper {
@@ -176,11 +112,10 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
             color: var(--text) !important;
         }
-
         .leaflet-popup-tip { background: var(--surface) !important; }
         .leaflet-popup-close-button { color: var(--muted) !important; }
 
-        .popup-inner { font-family: 'IBM Plex Mono', monospace; min-width: 200px; }
+        .popup-inner { font-family: 'IBM Plex Mono', monospace; min-width: 220px; }
 
         .popup-station-id {
             font-family: 'Bebas Neue', sans-serif;
@@ -201,6 +136,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
+            align-items: start;
         }
 
         .popup-stat { display: flex; flex-direction: column; }
@@ -232,7 +168,6 @@
             padding-top: 8px;
         }
 
-        /* Leaflet dark tiles */
         .leaflet-tile { filter: brightness(0.85) saturate(0.6); }
     </style>
 </head>
@@ -243,21 +178,21 @@
     <div class="header-right">
         <div id="station-count">-- stations</div>
         <div id="status" class="loading">
-            <span class="pulse"></span>INITIALIZING...
+            <span class="pulse" style="background:#f0a500"></span>INITIALIZING...
         </div>
     </div>
 </div>
 
 <div id="legend">
-    <span style="color: var(--text); font-weight:600; margin-right:4px;">TEMP:</span>
-    <div class="legend-item"><div class="legend-dot" style="background:#5b8dee;"></div> &lt;32°F</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;"></div> 32–50°F</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#3fb950;"></div> 50–65°F</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> 65–80°F</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#e05c2a;"></div> 80–90°F</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#f85149;"></div> &gt;90°F</div>
-    <span style="margin-left:8px; color: var(--text); font-weight:600; margin-right:4px;">★</span>
-    <span>Highlighted station</span>
+    <span style="color:var(--text);font-weight:600;margin-right:4px;">TEMP:</span>
+    <div class="legend-item"><div class="legend-dot" style="background:#5b8dee;"></div>&lt;32°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;"></div>32–50°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3fb950;"></div>50–65°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div>65–80°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e05c2a;"></div>80–90°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f85149;"></div>&gt;90°F</div>
+    <span style="margin-left:12px;color:var(--text);font-weight:600;margin-right:4px;">BARB:</span>
+    <span>Each full barb = 10 kt · half barb = 5 kt · pennant = 50 kt</span>
 </div>
 
 <div id="map"></div>
@@ -278,9 +213,10 @@ const CONFIG = {
 /* ═══════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════ */
-const cToF = c => c !== null ? Math.round((c * 9/5) + 32) : null;
+const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
+const msToKts = ms => ms !== null ? ms * 1.94384 : null;
 const msToMph = ms => ms !== null ? Math.round(ms * 2.237) : null;
-const safe = (val, fb = null) => (val === null || val === undefined) ? fb : val;
+const safe    = (v, fb = null) => (v === null || v === undefined) ? fb : v;
 
 function degreesToCompass(deg) {
     if (deg === null) return 'N/A';
@@ -289,7 +225,7 @@ function degreesToCompass(deg) {
 }
 
 function tempColor(f) {
-    if (f === null) return '#555';
+    if (f === null) return '#444';
     if (f < 32)  return '#5b8dee';
     if (f < 50)  return '#58a6ff';
     if (f < 65)  return '#3fb950';
@@ -298,85 +234,133 @@ function tempColor(f) {
     return '#f85149';
 }
 
-function setStatus(msg, cls) {
+function setStatus(msg, cls, color) {
     const el = document.getElementById('status');
     el.className = cls;
-    el.innerHTML = `<span class="pulse" style="background:${cls==='ok'?'#3fb950':cls==='error'?'#f85149':'#f0a500'}"></span>${msg}`;
+    el.innerHTML = `<span class="pulse" style="background:${color}"></span>${msg}`;
 }
 
 /* ═══════════════════════════════════════════
-   MAP INIT
+   WIND BARB SVG GENERATOR
+   Meteorological convention:
+     - Staff points INTO the wind (from direction)
+     - Barbs drawn on right side of staff (NH)
+     - Pennant = 50 kt, full barb = 10 kt, half barb = 5 kt
 ═══════════════════════════════════════════ */
-const map = L.map('map', {
-    center: CONFIG.center,
-    zoom: CONFIG.zoom,
-    zoomControl: true,
-    attributionControl: true
-});
+function buildWindBarbSVG(speedMs, directionDeg, color) {
+    const SIZE   = 44;
+    const cx     = SIZE / 2;
+    const cy     = SIZE / 2;
+    const staffLen = 18;
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap © CARTO',
-    subdomains: 'abcd',
-    maxZoom: 19
-}).addTo(map);
+    // Calm wind: draw a circle
+    if (speedMs === null || speedMs < 0.5) {
+        return `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="${cx}" cy="${cy}" r="5" fill="none" stroke="${color}" stroke-width="1.5"/>
+        </svg>`;
+    }
 
-/* ═══════════════════════════════════════════
-   STATION LAYER
-═══════════════════════════════════════════ */
-const markerLayer = L.layerGroup().addTo(map);
+    const kts = speedMs * 1.94384;
 
-/* ═══════════════════════════════════════════
-   FETCH ALL GA STATIONS
-═══════════════════════════════════════════ */
-async function fetchStations() {
-    const res = await fetch('https://api.weather.gov/stations?state=GA&limit=500', {
-        headers: { 'User-Agent': CONFIG.userAgent }
-    });
-    if (!res.ok) throw new Error('Failed to fetch stations');
-    const data = await res.json();
-    return data.features || [];
+    // Direction: meteorological = wind FROM this direction
+    // Staff points in direction wind is coming FROM
+    // We rotate the whole barb group by direction degrees
+    const angleRad = (directionDeg * Math.PI) / 180;
+
+    // Staff tip (where barbs attach) is at top of staff in local coords
+    // Center dot at origin, staff extends upward
+    const tipX = 0;
+    const tipY = -staffLen;
+
+    // Build barb marks in local (unrotated) space
+    // Barbs go to the right of the staff (NH convention)
+    let barbs = [];
+    let remaining = kts;
+    let pos = 0; // position along staff from tip downward
+    const barbSpacing = 4;
+    const fullBarbLen = 9;
+    const halfBarbLen = 5;
+    const pennantWidth = 5;
+
+    // Pennants (50 kt each)
+    while (remaining >= 47.5) {
+        // Triangle pennant
+        barbs.push(`<polygon points="0,${tipY + pos} ${fullBarbLen},${tipY + pos + 2} 0,${tipY + pos + pennantWidth}" fill="${color}" stroke="${color}" stroke-width="0.5"/>`);
+        pos += pennantWidth + 1;
+        remaining -= 50;
+    }
+
+    // Full barbs (10 kt each)
+    while (remaining >= 7.5) {
+        barbs.push(`<line x1="0" y1="${tipY + pos}" x2="${fullBarbLen}" y2="${tipY + pos + 3}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
+        pos += barbSpacing;
+        remaining -= 10;
+    }
+
+    // Half barb (5 kt)
+    if (remaining >= 2.5) {
+        barbs.push(`<line x1="0" y1="${tipY + pos}" x2="${halfBarbLen}" y2="${tipY + pos + 1.5}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
+    }
+
+    const rotate = directionDeg; // rotate so staff points into wind direction
+
+    return `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(${cx},${cy}) rotate(${rotate})">
+            <!-- Staff -->
+            <line x1="0" y1="0" x2="${tipX}" y2="${tipY}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Barbs -->
+            ${barbs.join('\n            ')}
+            <!-- Center dot -->
+            <circle cx="0" cy="0" r="2.5" fill="${color}"/>
+        </g>
+    </svg>`;
 }
 
 /* ═══════════════════════════════════════════
-   FETCH OBSERVATION FOR ONE STATION
+   MARKER HTML
 ═══════════════════════════════════════════ */
-async function fetchObs(stationId) {
-    try {
-        const res = await fetch(
-            `https://api.weather.gov/stations/${stationId}/observations/latest`,
-            { headers: { 'User-Agent': CONFIG.userAgent } }
-        );
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.properties || null;
-    } catch { return null; }
-}
+function buildMarkerHTML(stationId, tempF, speedMs, dirDeg, highlighted) {
+    const color    = tempColor(tempF);
+    const tempStr  = tempF !== null ? `${tempF}°` : '--';
+    const shortId  = stationId.startsWith('K') ? stationId.slice(1) : stationId;
+    const barbSvg  = buildWindBarbSVG(speedMs, dirDeg, color);
+    const glowStyle = highlighted
+        ? `filter: drop-shadow(0 0 4px ${color});`
+        : '';
 
-/* ═══════════════════════════════════════════
-   BUILD MARKER HTML
-═══════════════════════════════════════════ */
-function buildMarkerHTML(stationId, tempF, highlighted) {
-    const color = tempColor(tempF);
-    const tempStr = tempF !== null ? `${tempF}°` : '--';
-    const hlClass = highlighted ? 'highlighted' : '';
     return `
-        <div class="station-marker ${hlClass}">
-            <div class="station-dot" style="background:${color};"></div>
-            <div class="station-temp-label">${stationId.replace('K','')} ${tempStr}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+            <div style="${glowStyle}">${barbSvg}</div>
+            <div style="
+                font-family:'IBM Plex Mono',monospace;
+                font-size:10px;
+                font-weight:600;
+                color:${color};
+                background:rgba(13,17,23,0.88);
+                padding:1px 5px;
+                border-radius:3px;
+                margin-top:1px;
+                white-space:nowrap;
+                ${highlighted ? `border:1px solid ${color};` : ''}
+            ">${shortId} ${tempStr}</div>
         </div>`;
 }
 
 /* ═══════════════════════════════════════════
-   BUILD POPUP HTML
+   POPUP HTML
 ═══════════════════════════════════════════ */
 function buildPopup(stationId, name, obs) {
-    const tempF    = cToF(safe(obs?.temperature?.value));
-    const dewF     = cToF(safe(obs?.dewpoint?.value));
-    const windMph  = msToMph(safe(obs?.windSpeed?.value));
-    const windDeg  = safe(obs?.windDirection?.value);
-    const windDir  = degreesToCompass(windDeg);
-    const desc     = safe(obs?.textDescription, 'N/A');
-    const updated  = obs?.timestamp ? new Date(obs.timestamp).toLocaleTimeString() : 'N/A';
+    const tempF   = cToF(safe(obs?.temperature?.value));
+    const dewF    = cToF(safe(obs?.dewpoint?.value));
+    const windMs  = safe(obs?.windSpeed?.value);
+    const windDeg = safe(obs?.windDirection?.value);
+    const windMph = msToMph(windMs);
+    const windKts = windMs !== null ? Math.round(windMs * 1.94384) : null;
+    const windDir = degreesToCompass(windDeg);
+    const desc    = safe(obs?.textDescription, 'N/A');
+    const updated = obs?.timestamp ? new Date(obs.timestamp).toLocaleTimeString() : 'N/A';
+
+    const barbSvg = buildWindBarbSVG(windMs, windDeg, '#e6edf3');
 
     return `
         <div class="popup-inner">
@@ -392,34 +376,78 @@ function buildPopup(stationId, name, obs) {
                     <span class="popup-stat-value">${dewF !== null ? dewF + '°F' : 'N/A'}</span>
                 </div>
                 <div class="popup-stat">
-                    <span class="popup-stat-label">Wind Speed</span>
-                    <span class="popup-stat-value">${windMph !== null ? windMph + ' mph' : 'Calm'}</span>
+                    <span class="popup-stat-label">Wind</span>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+                        ${barbSvg}
+                        <div>
+                            <div class="popup-stat-value" style="font-size:0.9rem;">
+                                ${windDir} ${windMph !== null ? windMph + ' mph' : 'Calm'}
+                            </div>
+                            <div style="font-size:0.65rem;color:var(--muted);">
+                                ${windKts !== null ? windKts + ' kt' : ''}
+                                ${windDeg !== null ? ' · ' + Math.round(windDeg) + '°' : ''}
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="popup-stat">
-                    <span class="popup-stat-label">Direction</span>
-                    <span class="popup-stat-value">${windDeg !== null ? `${windDir} (${Math.round(windDeg)}°)` : 'N/A'}</span>
+                    <span class="popup-stat-label">Conditions</span>
+                    <span class="popup-stat-value" style="font-size:0.8rem;">${desc}</span>
                 </div>
-            </div>
-            <div class="popup-stat" style="margin-top:8px;">
-                <span class="popup-stat-label">Conditions</span>
-                <span class="popup-stat-value" style="font-size:0.85rem;">${desc}</span>
             </div>
             <div class="popup-updated">Updated: ${updated}</div>
         </div>`;
 }
 
 /* ═══════════════════════════════════════════
+   MAP INIT
+═══════════════════════════════════════════ */
+const map = L.map('map', {
+    center: CONFIG.center,
+    zoom: CONFIG.zoom
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+}).addTo(map);
+
+const markerLayer = L.layerGroup().addTo(map);
+
+/* ═══════════════════════════════════════════
+   FETCH STATIONS
+═══════════════════════════════════════════ */
+async function fetchStations() {
+    const res = await fetch('https://api.weather.gov/stations?state=GA&limit=500', {
+        headers: { 'User-Agent': CONFIG.userAgent }
+    });
+    if (!res.ok) throw new Error('Failed to fetch stations');
+    return (await res.json()).features || [];
+}
+
+async function fetchObs(stationId) {
+    try {
+        const res = await fetch(
+            `https://api.weather.gov/stations/${stationId}/observations/latest`,
+            { headers: { 'User-Agent': CONFIG.userAgent } }
+        );
+        if (!res.ok) return null;
+        return (await res.json()).properties || null;
+    } catch { return null; }
+}
+
+/* ═══════════════════════════════════════════
    MAIN LOAD
 ═══════════════════════════════════════════ */
 async function loadMap() {
-    setStatus('LOADING STATIONS...', 'loading');
+    setStatus('LOADING STATIONS...', 'loading', '#f0a500');
     markerLayer.clearLayers();
 
     try {
         const stations = await fetchStations();
         document.getElementById('station-count').textContent = `${stations.length} stations`;
 
-        // Fetch all observations in parallel (batched to avoid hammering API)
         const BATCH = 10;
         let loaded = 0;
 
@@ -436,38 +464,42 @@ async function loadMap() {
                 const name       = props.name || '';
                 const highlighted = CONFIG.highlightedStations.includes(stationId);
 
-                const obs   = await fetchObs(stationId);
-                const tempF = cToF(safe(obs?.temperature?.value));
+                const obs    = await fetchObs(stationId);
+                const tempF  = cToF(safe(obs?.temperature?.value));
+                const windMs = safe(obs?.windSpeed?.value);
+                const windDeg = safe(obs?.windDirection?.value);
 
                 const icon = L.divIcon({
                     className: 'station-label',
-                    html: buildMarkerHTML(stationId, tempF, highlighted),
-                    iconAnchor: [30, 7]
+                    html: buildMarkerHTML(stationId, tempF, windMs, windDeg, highlighted),
+                    iconAnchor: [22, 22],
+                    iconSize: [44, 55]
                 });
 
-                const marker = L.marker([lat, lng], { icon, zIndexOffset: highlighted ? 1000 : 0 });
-                marker.bindPopup(buildPopup(stationId, name, obs), {
-                    maxWidth: 260,
-                    className: 'dark-popup'
+                const marker = L.marker([lat, lng], {
+                    icon,
+                    zIndexOffset: highlighted ? 1000 : 0
                 });
+
+                marker.bindPopup(buildPopup(stationId, name, obs), {
+                    maxWidth: 280
+                });
+
                 marker.addTo(markerLayer);
                 loaded++;
             }));
 
-            setStatus(`LOADING... ${loaded}/${stations.length}`, 'loading');
+            setStatus(`LOADING... ${loaded}/${stations.length}`, 'loading', '#f0a500');
         }
 
-        setStatus(`LIVE · ${new Date().toLocaleTimeString()}`, 'ok');
+        setStatus(`LIVE · ${new Date().toLocaleTimeString()}`, 'ok', '#3fb950');
 
     } catch (err) {
         console.error(err);
-        setStatus('ERROR — CHECK CONSOLE', 'error');
+        setStatus('ERROR — CHECK CONSOLE', 'error', '#f85149');
     }
 }
 
-/* ═══════════════════════════════════════════
-   INIT + AUTO REFRESH
-═══════════════════════════════════════════ */
 loadMap();
 setInterval(loadMap, CONFIG.refreshMs);
 </script>
