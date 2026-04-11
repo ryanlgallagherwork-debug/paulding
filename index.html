@@ -168,7 +168,8 @@
             padding-top: 8px;
         }
 
-        .leaflet-tile { filter: brightness(0.85) saturate(0.6); }
+        /* Light map tiles — no dark filter */
+        .leaflet-tile { filter: saturate(0.5) brightness(1.05); }
     </style>
 </head>
 <body>
@@ -199,9 +200,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* ═══════════════════════════════════════════
-   CONFIG
-═══════════════════════════════════════════ */
 const CONFIG = {
     userAgent: '(Ryan Gallagher Weather, ryanlgallagher.work@gmail.com)',
     refreshMs: 60000,
@@ -210,11 +208,7 @@ const CONFIG = {
     zoom: 7
 };
 
-/* ═══════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════ */
 const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
-const msToKts = ms => ms !== null ? ms * 1.94384 : null;
 const msToMph = ms => ms !== null ? Math.round(ms * 2.237) : null;
 const safe    = (v, fb = null) => (v === null || v === undefined) ? fb : v;
 
@@ -241,76 +235,51 @@ function setStatus(msg, cls, color) {
 }
 
 /* ═══════════════════════════════════════════
-   WIND BARB SVG GENERATOR
-   Meteorological convention:
-     - Staff points INTO the wind (from direction)
-     - Barbs drawn on right side of staff (NH)
-     - Pennant = 50 kt, full barb = 10 kt, half barb = 5 kt
+   WIND BARB SVG
 ═══════════════════════════════════════════ */
 function buildWindBarbSVG(speedMs, directionDeg, color) {
-    const SIZE   = 44;
-    const cx     = SIZE / 2;
-    const cy     = SIZE / 2;
+    const SIZE     = 44;
+    const cx       = SIZE / 2;
+    const cy       = SIZE / 2;
     const staffLen = 18;
 
-    // Calm wind: draw a circle
     if (speedMs === null || speedMs < 0.5) {
         return `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
             <circle cx="${cx}" cy="${cy}" r="5" fill="none" stroke="${color}" stroke-width="1.5"/>
         </svg>`;
     }
 
-    const kts = speedMs * 1.94384;
-
-    // Direction: meteorological = wind FROM this direction
-    // Staff points in direction wind is coming FROM
-    // We rotate the whole barb group by direction degrees
-    const angleRad = (directionDeg * Math.PI) / 180;
-
-    // Staff tip (where barbs attach) is at top of staff in local coords
-    // Center dot at origin, staff extends upward
-    const tipX = 0;
-    const tipY = -staffLen;
-
-    // Build barb marks in local (unrotated) space
-    // Barbs go to the right of the staff (NH convention)
-    let barbs = [];
-    let remaining = kts;
-    let pos = 0; // position along staff from tip downward
-    const barbSpacing = 4;
-    const fullBarbLen = 9;
-    const halfBarbLen = 5;
+    const kts          = speedMs * 1.94384;
+    const tipY         = -staffLen;
+    const barbSpacing  = 4;
+    const fullBarbLen  = 9;
+    const halfBarbLen  = 5;
     const pennantWidth = 5;
 
-    // Pennants (50 kt each)
+    let barbs     = [];
+    let remaining = kts;
+    let pos       = 0;
+
     while (remaining >= 47.5) {
-        // Triangle pennant
         barbs.push(`<polygon points="0,${tipY + pos} ${fullBarbLen},${tipY + pos + 2} 0,${tipY + pos + pennantWidth}" fill="${color}" stroke="${color}" stroke-width="0.5"/>`);
         pos += pennantWidth + 1;
         remaining -= 50;
     }
-
-    // Full barbs (10 kt each)
     while (remaining >= 7.5) {
         barbs.push(`<line x1="0" y1="${tipY + pos}" x2="${fullBarbLen}" y2="${tipY + pos + 3}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
         pos += barbSpacing;
         remaining -= 10;
     }
-
-    // Half barb (5 kt)
     if (remaining >= 2.5) {
         barbs.push(`<line x1="0" y1="${tipY + pos}" x2="${halfBarbLen}" y2="${tipY + pos + 1.5}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`);
     }
 
-    const rotate = directionDeg; // rotate so staff points into wind direction
+    const rotate = directionDeg ?? 0;
 
     return `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(${cx},${cy}) rotate(${rotate})">
-            <!-- Staff -->
-            <line x1="0" y1="0" x2="${tipX}" y2="${tipY}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
-            <!-- Barbs -->
-            ${barbs.join('\n            ')}
-            <!-- Center dot -->
+            <line x1="0" y1="0" x2="0" y2="${tipY}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+            ${barbs.join('\n')}
             <circle cx="0" cy="0" r="2.5" fill="${color}"/>
         </g>
     </svg>`;
@@ -320,27 +289,27 @@ function buildWindBarbSVG(speedMs, directionDeg, color) {
    MARKER HTML
 ═══════════════════════════════════════════ */
 function buildMarkerHTML(stationId, tempF, speedMs, dirDeg, highlighted) {
-    const color    = tempColor(tempF);
-    const tempStr  = tempF !== null ? `${tempF}°` : '--';
-    const shortId  = stationId.startsWith('K') ? stationId.slice(1) : stationId;
-    const barbSvg  = buildWindBarbSVG(speedMs, dirDeg, color);
-    const glowStyle = highlighted
-        ? `filter: drop-shadow(0 0 4px ${color});`
-        : '';
+    const color   = tempColor(tempF);
+    const tempStr = tempF !== null ? `${tempF}°F` : '--';
+    const shortId = stationId.startsWith('K') ? stationId.slice(1) : stationId;
+    const barbSvg = buildWindBarbSVG(speedMs, dirDeg, color);
+    const glowStyle = highlighted ? `filter: drop-shadow(0 0 5px ${color});` : '';
 
     return `
         <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
             <div style="${glowStyle}">${barbSvg}</div>
             <div style="
                 font-family:'IBM Plex Mono',monospace;
-                font-size:10px;
+                font-size:13px;
                 font-weight:600;
                 color:${color};
-                background:rgba(13,17,23,0.88);
-                padding:1px 5px;
-                border-radius:3px;
+                background:rgba(13,17,23,0.82);
+                padding:2px 7px;
+                border-radius:4px;
                 margin-top:1px;
                 white-space:nowrap;
+                letter-spacing:0.03em;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.8);
                 ${highlighted ? `border:1px solid ${color};` : ''}
             ">${shortId} ${tempStr}</div>
         </div>`;
@@ -359,13 +328,12 @@ function buildPopup(stationId, name, obs) {
     const windDir = degreesToCompass(windDeg);
     const desc    = safe(obs?.textDescription, 'N/A');
     const updated = obs?.timestamp ? new Date(obs.timestamp).toLocaleTimeString() : 'N/A';
-
     const barbSvg = buildWindBarbSVG(windMs, windDeg, '#e6edf3');
 
     return `
         <div class="popup-inner">
             <div class="popup-station-id">${stationId}</div>
-            <div class="popup-station-name">${name || ''}</div>
+            <div class="popup-station-name">${name}</div>
             <div class="popup-grid">
                 <div class="popup-stat">
                     <span class="popup-stat-label">Temperature</span>
@@ -400,14 +368,11 @@ function buildPopup(stationId, name, obs) {
 }
 
 /* ═══════════════════════════════════════════
-   MAP INIT
+   MAP INIT — light tile layer
 ═══════════════════════════════════════════ */
-const map = L.map('map', {
-    center: CONFIG.center,
-    zoom: CONFIG.zoom
-});
+const map = L.map('map', { center: CONFIG.center, zoom: CONFIG.zoom });
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO',
     subdomains: 'abcd',
     maxZoom: 19
@@ -416,7 +381,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 const markerLayer = L.layerGroup().addTo(map);
 
 /* ═══════════════════════════════════════════
-   FETCH STATIONS
+   FETCH
 ═══════════════════════════════════════════ */
 async function fetchStations() {
     const res = await fetch('https://api.weather.gov/stations?state=GA&limit=500', {
@@ -446,10 +411,9 @@ async function loadMap() {
 
     try {
         const stations = await fetchStations();
-        document.getElementById('station-count').textContent = `${stations.length} stations`;
-
         const BATCH = 10;
         let loaded = 0;
+        let shown  = 0;
 
         for (let i = 0; i < stations.length; i += BATCH) {
             const batch = stations.slice(i, i + BATCH);
@@ -464,16 +428,21 @@ async function loadMap() {
                 const name       = props.name || '';
                 const highlighted = CONFIG.highlightedStations.includes(stationId);
 
-                const obs    = await fetchObs(stationId);
-                const tempF  = cToF(safe(obs?.temperature?.value));
-                const windMs = safe(obs?.windSpeed?.value);
+                const obs     = await fetchObs(stationId);
+                const tempRaw = safe(obs?.temperature?.value);
+                const tempF   = cToF(tempRaw);
+
+                // ── SKIP stations not reporting temperature ──
+                if (tempF === null) return;
+
+                const windMs  = safe(obs?.windSpeed?.value);
                 const windDeg = safe(obs?.windDirection?.value);
 
                 const icon = L.divIcon({
                     className: 'station-label',
                     html: buildMarkerHTML(stationId, tempF, windMs, windDeg, highlighted),
                     iconAnchor: [22, 22],
-                    iconSize: [44, 55]
+                    iconSize: [44, 60]
                 });
 
                 const marker = L.marker([lat, lng], {
@@ -481,17 +450,16 @@ async function loadMap() {
                     zIndexOffset: highlighted ? 1000 : 0
                 });
 
-                marker.bindPopup(buildPopup(stationId, name, obs), {
-                    maxWidth: 280
-                });
-
+                marker.bindPopup(buildPopup(stationId, name, obs), { maxWidth: 280 });
                 marker.addTo(markerLayer);
-                loaded++;
+                shown++;
             }));
 
+            loaded += batch.length;
             setStatus(`LOADING... ${loaded}/${stations.length}`, 'loading', '#f0a500');
         }
 
+        document.getElementById('station-count').textContent = `${shown} reporting`;
         setStatus(`LIVE · ${new Date().toLocaleTimeString()}`, 'ok', '#3fb950');
 
     } catch (err) {
