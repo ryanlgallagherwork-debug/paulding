@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Georgia & Alabama Live Weather Map</title>
+    <title>Northwest Georgia Live Weather Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
     <style>
@@ -164,7 +164,7 @@
 <body>
 
 <div id="header">
-    <h1>GEORGIA & ALABAMA <span>LIVE WEATHER</span></h1>
+    <h1>NORTHWEST GEORGIA <span>LIVE WEATHER</span></h1>
     <div class="header-right">
         <div id="station-count">-- stations</div>
         <div id="status" class="loading">
@@ -194,8 +194,8 @@ const CONFIG = {
     refreshMs: 60000,
     states: ['GA', 'AL'],
     highlightedStations: ['KPUJ', 'KFFC', 'KATL', 'KRYY'],
-    center: [32.8, -85.5],
-    zoom: 7
+    center: [33.9, -84.8],
+    zoom: 9
 };
 
 const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
