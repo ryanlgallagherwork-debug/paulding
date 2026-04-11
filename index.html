@@ -193,13 +193,13 @@ const CONFIG = {
     userAgent: '(Ryan Gallagher Weather, ryanlgallagher.work@gmail.com)',
     refreshMs: 60000,
     states: ['GA', 'AL'],
-    highlightedStations: ['KPUJ', 'KFFC', 'KATL', 'KRYY'],
+    highlightedStations: ['KFFC', 'KATL', 'KRYY'],
     center: [33.9, -84.8],
     zoom: 9
 };
 
 const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
-const msToMph = ms => ms !== null ? Math.round(ms * 0.62) : null;
+const msToMph = ms => ms !== null ? Math.round(ms * 0.6213712) : null;
 const safe    = (v, fb = null) => (v === null || v === undefined) ? fb : v;
 
 function degreesToCompass(deg) {
@@ -236,7 +236,7 @@ function buildWindBarbSVG(speedMs, directionDeg, color) {
         </svg>`;
     }
 
-    const kts = speedMs / 1.852001;
+    const kts = speedMs * 0.5399565;
     const tipY = -staffLen;
     let barbs = [], remaining = kts, pos = 0;
     const barbSpacing = 4, fullBarbLen = 9, halfBarbLen = 5, pennantWidth = 5;
