@@ -300,7 +300,7 @@ function buildPopup(stationId, name, obs) {
     const windMs  = safe(obs?.windSpeed?.value);
     const windDeg = safe(obs?.windDirection?.value);
     const windMph = msToMph(windMs);
-    const windKts = windMs !== null ? Math.round(windMs * 1.94384) : null;
+    const windKts = windMs !== null ? Math.round(windMs * 0.5399565) : null;
     const windDir = degreesToCompass(windDeg);
     const desc    = safe(obs?.textDescription, 'N/A');
     const updated = obs?.timestamp ? new Date(obs.timestamp).toLocaleTimeString() : 'N/A';
