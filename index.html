@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Georgia Live Weather Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --accent: #f0a500;
+            --accent2: #e05c2a;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --highlight: #58a6ff;
+            --danger: #f85149;
+            --green: #3fb950;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── HEADER ── */
+        #header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+
+        #header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+        }
+
+        #header h1 span { color: var(--text); }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        #status {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        #status.loading { color: var(--accent); }
+        #status.error   { color: var(--danger); }
+        #status.ok      { color: var(--green); }
+
+        .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        #station-count {
+            font-size: 0.7rem;
+            color: var(--muted);
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* ── LEGEND ── */
+        #legend {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding: 6px 20px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            font-size: 0.65rem;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+
+        .legend-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        /* ── MAP ── */
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* ── CUSTOM MARKER LABELS ── */
+        .station-label {
+            background: transparent;
+            border: none;
+        }
+
+        .station-marker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .station-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            transition: transform 0.15s;
+        }
+
+        .station-marker:hover .station-dot { transform: scale(1.4); }
+
+        .station-temp-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: #fff;
+            background: rgba(13,17,23,0.85);
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-top: 2px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .highlighted .station-dot {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .highlighted .station-temp-label {
+            color: var(--accent);
+            background: rgba(13,17,23,0.95);
+        }
+
+        /* ── POPUP ── */
+        .leaflet-popup-content-wrapper {
+            background: var(--surface) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+            color: var(--text) !important;
+        }
+
+        .leaflet-popup-tip { background: var(--surface) !important; }
+        .leaflet-popup-close-button { color: var(--muted) !important; }
+
+        .popup-inner { font-family: 'IBM Plex Mono', monospace; min-width: 200px; }
+
+        .popup-station-id {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 2px;
+        }
+
+        .popup-station-name {
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .popup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .popup-stat { display: flex; flex-direction: column; }
+
+        .popup-stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 2px;
+        }
+
+        .popup-stat-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .popup-stat-value.big {
+            font-size: 1.4rem;
+            color: var(--accent);
+        }
+
+        .popup-updated {
+            font-size: 0.6rem;
+            color: var(--muted);
+            margin-top: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+        }
+
+        /* Leaflet dark tiles */
+        .leaflet-tile { filter: brightness(0.85) saturate(0.6); }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <h1>GEORGIA <span>LIVE WEATHER</span></h1>
+    <div class="header-right">
+        <div id="station-count">-- stations</div>
+        <div id="status" class="loading">
+            <span class="pulse"></span>INITIALIZING...
+        </div>
+    </div>
+</div>
+
+<div id="legend">
+    <span style="color: var(--text); font-weight:600; margin-right:4px;">TEMP:</span>
+    <div class="legend-item"><div class="legend-dot" style="background:#5b8dee;"></div> &lt;32°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;"></div> 32–50°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3fb950;"></div> 50–65°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> 65–80°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e05c2a;"></div> 80–90°F</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f85149;"></div> &gt;90°F</div>
+    <span style="margin-left:8px; color: var(--text); font-weight:600; margin-right:4px;">★</span>
+    <span>Highlighted station</span>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════ */
+const CONFIG = {
+    userAgent: '(Ryan Gallagher Weather, ryanlgallagher.work@gmail.com)',
+    refreshMs: 60000,
+    highlightedStations: ['KPUJ', 'KFFC', 'KATL', 'KRYY'],
+    center: [32.8, -83.2],
+    zoom: 7
+};
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+const cToF = c => c !== null ? Math.round((c * 9/5) + 32) : null;
+const msToMph = ms => ms !== null ? Math.round(ms * 2.237) : null;
+const safe = (val, fb = null) => (val === null || val === undefined) ? fb : val;
+
+function degreesToCompass(deg) {
+    if (deg === null) return 'N/A';
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function tempColor(f) {
+    if (f === null) return '#555';
+    if (f < 32)  return '#5b8dee';
+    if (f < 50)  return '#58a6ff';
+    if (f < 65)  return '#3fb950';
+    if (f < 80)  return '#f0a500';
+    if (f < 90)  return '#e05c2a';
+    return '#f85149';
+}
+
+function setStatus(msg, cls) {
+    const el = document.getElementById('status');
+    el.className = cls;
+    el.innerHTML = `<span class="pulse" style="background:${cls==='ok'?'#3fb950':cls==='error'?'#f85149':'#f0a500'}"></span>${msg}`;
+}
+
+/* ═══════════════════════════════════════════
+   MAP INIT
+═══════════════════════════════════════════ */
+const map = L.map('map', {
+    center: CONFIG.center,
+    zoom: CONFIG.zoom,
+    zoomControl: true,
+    attributionControl: true
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+}).addTo(map);
+
+/* ═══════════════════════════════════════════
+   STATION LAYER
+═══════════════════════════════════════════ */
+const markerLayer = L.layerGroup().addTo(map);
+
+/* ═══════════════════════════════════════════
+   FETCH ALL GA STATIONS
+═══════════════════════════════════════════ */
+async function fetchStations() {
+    const res = await fetch('https://api.weather.gov/stations?state=GA&limit=500', {
+        headers: { 'User-Agent': CONFIG.userAgent }
+    });
+    if (!res.ok) throw new Error('Failed to fetch stations');
+    const data = await res.json();
+    return data.features || [];
+}
+
+/* ═══════════════════════════════════════════
+   FETCH OBSERVATION FOR ONE STATION
+═══════════════════════════════════════════ */
+async function fetchObs(stationId) {
+    try {
+        const res = await fetch(
+            `https://api.weather.gov/stations/${stationId}/observations/latest`,
+            { headers: { 'User-Agent': CONFIG.userAgent } }
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.properties || null;
+    } catch { return null; }
+}
+
+/* ═══════════════════════════════════════════
+   BUILD MARKER HTML
+═══════════════════════════════════════════ */
+function buildMarkerHTML(stationId, tempF, highlighted) {
+    const color = tempColor(tempF);
+    const tempStr = tempF !== null ? `${tempF}°` : '--';
+    const hlClass = highlighted ? 'highlighted' : '';
+    return `
+        <div class="station-marker ${hlClass}">
+            <div class="station-dot" style="background:${color};"></div>
+            <div class="station-temp-label">${stationId.replace('K','')} ${tempStr}</div>
+        </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   BUILD POPUP HTML
+═══════════════════════════════════════════ */
+function buildPopup(stationId, name, obs) {
+    const tempF    = cToF(safe(obs?.temperature?.value));
+    const dewF     = cToF(safe(obs?.dewpoint?.value));
+    const windMph  = msToMph(safe(obs?.windSpeed?.value));
+    const windDeg  = safe(obs?.windDirection?.value);
+    const windDir  = degreesToCompass(windDeg);
+    const desc     = safe(obs?.textDescription, 'N/A');
+    const updated  = obs?.timestamp ? new Date(obs.timestamp).toLocaleTimeString() : 'N/A';
+
+    return `
+        <div class="popup-inner">
+            <div class="popup-station-id">${stationId}</div>
+            <div class="popup-station-name">${name || ''}</div>
+            <div class="popup-grid">
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Temperature</span>
+                    <span class="popup-stat-value big">${tempF !== null ? tempF + '°F' : 'N/A'}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Dewpoint</span>
+                    <span class="popup-stat-value">${dewF !== null ? dewF + '°F' : 'N/A'}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Wind Speed</span>
+                    <span class="popup-stat-value">${windMph !== null ? windMph + ' mph' : 'Calm'}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Direction</span>
+                    <span class="popup-stat-value">${windDeg !== null ? `${windDir} (${Math.round(windDeg)}°)` : 'N/A'}</span>
+                </div>
+            </div>
+            <div class="popup-stat" style="margin-top:8px;">
+                <span class="popup-stat-label">Conditions</span>
+                <span class="popup-stat-value" style="font-size:0.85rem;">${desc}</span>
+            </div>
+            <div class="popup-updated">Updated: ${updated}</div>
+        </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   MAIN LOAD
+═══════════════════════════════════════════ */
+async function loadMap() {
+    setStatus('LOADING STATIONS...', 'loading');
+    markerLayer.clearLayers();
+
+    try {
+        const stations = await fetchStations();
+        document.getElementById('station-count').textContent = `${stations.length} stations`;
+
+        // Fetch all observations in parallel (batched to avoid hammering API)
+        const BATCH = 10;
+        let loaded = 0;
+
+        for (let i = 0; i < stations.length; i += BATCH) {
+            const batch = stations.slice(i, i + BATCH);
+
+            await Promise.all(batch.map(async (station) => {
+                const props = station.properties;
+                const geo   = station.geometry;
+                if (!geo?.coordinates) return;
+
+                const [lng, lat] = geo.coordinates;
+                const stationId  = props.stationIdentifier;
+                const name       = props.name || '';
+                const highlighted = CONFIG.highlightedStations.includes(stationId);
+
+                const obs   = await fetchObs(stationId);
+                const tempF = cToF(safe(obs?.temperature?.value));
+
+                const icon = L.divIcon({
+                    className: 'station-label',
+                    html: buildMarkerHTML(stationId, tempF, highlighted),
+                    iconAnchor: [30, 7]
+                });
+
+                const marker = L.marker([lat, lng], { icon, zIndexOffset: highlighted ? 1000 : 0 });
+                marker.bindPopup(buildPopup(stationId, name, obs), {
+                    maxWidth: 260,
+                    className: 'dark-popup'
+                });
+                marker.addTo(markerLayer);
+                loaded++;
+            }));
+
+            setStatus(`LOADING... ${loaded}/${stations.length}`, 'loading');
+        }
+
+        setStatus(`LIVE · ${new Date().toLocaleTimeString()}`, 'ok');
+
+    } catch (err) {
+        console.error(err);
+        setStatus('ERROR — CHECK CONSOLE', 'error');
+    }
+}
+
+/* ═══════════════════════════════════════════
+   INIT + AUTO REFRESH
+═══════════════════════════════════════════ */
+loadMap();
+setInterval(loadMap, CONFIG.refreshMs);
+</script>
+</body>
+</html>
