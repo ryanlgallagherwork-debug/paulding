@@ -288,10 +288,11 @@ function buildWindBarbSVG(speedMs, directionDeg, color) {
 /* ═══════════════════════════════════════════
    MARKER HTML
 ═══════════════════════════════════════════ */
-function buildMarkerHTML(tempF, speedMs, dirDeg, highlighted) {
+function buildMarkerHTML(stationId, tempF, speedMs, dirDeg, highlighted) {
     const color   = tempColor(tempF);
     const tempStr = tempF !== null ? `${tempF}°F` : '--';
     const barbSvg = buildWindBarbSVG(speedMs, dirDeg, color);
+    const shortId = stationId.startsWith('K') ? stationId.slice(1) : stationId;
     const glowStyle = highlighted ? `filter: drop-shadow(0 0 5px ${color});` : '';
 
     return `
