@@ -204,8 +204,8 @@ const CONFIG = {
     userAgent: '(Ryan Gallagher Weather, ryanlgallagher.work@gmail.com)',
     refreshMs: 60000,
     highlightedStations: ['KPUJ', 'KFFC', 'KATL', 'KRYY'],
-    center: [32.8, -83.2],
-    zoom: 7
+    center: [33.9, -84.8],
+    zoom: 10
 };
 
 const cToF    = c  => c  !== null ? Math.round((c * 9/5) + 32) : null;
@@ -288,10 +288,9 @@ function buildWindBarbSVG(speedMs, directionDeg, color) {
 /* ═══════════════════════════════════════════
    MARKER HTML
 ═══════════════════════════════════════════ */
-function buildMarkerHTML(stationId, tempF, speedMs, dirDeg, highlighted) {
+function buildMarkerHTML(tempF, speedMs, dirDeg, highlighted) {
     const color   = tempColor(tempF);
     const tempStr = tempF !== null ? `${tempF}°F` : '--';
-    const shortId = stationId.startsWith('K') ? stationId.slice(1) : stationId;
     const barbSvg = buildWindBarbSVG(speedMs, dirDeg, color);
     const glowStyle = highlighted ? `filter: drop-shadow(0 0 5px ${color});` : '';
 
